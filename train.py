@@ -13,7 +13,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer, lr_scheduler
 
-from data import musdbDataset, collate_fn
+from data import musdbDataset, moisesdbDataset, collate_fn
 from model import BandSplitRNN, BSRoformer, PLModel
 
 from utils.callbacks import ValidationProgressBar
@@ -25,6 +25,9 @@ def initialize_loaders(cfg: DictConfig) -> tp.Tuple[DataLoader, DataLoader]:
     Initializes train and validation dataloaders from configuration file.
     """
     train_dataset = musdbDataset(
+        **cfg.train_dataset,
+    )
+    train_dataset = moisesdbDataset(
         **cfg.train_dataset,
     )
     train_loader = DataLoader(
