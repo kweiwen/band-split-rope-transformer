@@ -127,11 +127,11 @@ def main(
 
     for target in targets:
         if subset == split == 'train':
-            file_path = save_dir / f"{target}_train.txt"
+            file_path = save_dir / f"{target}_moisesdb_train.txt"
         elif subset == 'train' and split == 'valid':
-            file_path = save_dir / f"{target}_valid.txt"
+            file_path = save_dir / f"{target}_moisesdb_valid.txt"
         else:
-            file_path = save_dir / f"{target}_test.txt"
+            file_path = save_dir / f"{target}_moisesdb_test.txt"
         # segment data and save indices to .txt file
         run_program(file_path, target, db, sad)
 
