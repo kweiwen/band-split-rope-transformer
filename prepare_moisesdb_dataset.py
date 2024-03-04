@@ -87,18 +87,23 @@ def run_program(
         for track in tqdm(db.tracks):
             waveforms = []
             target_folder = Path(db.data_path) / track / target
-            for wav_path in target_folder.glob("*.wav"):
-                # 使用 librosa 讀取 wav 文件
-                waveform, sample_rate = torchaudio.load(wav_path)
-                waveforms.append(waveform)
 
-            # get audio data and transform to torch.Tensor
-            y = torch.sum(torch.stack(waveforms), dim=0)
-            # find indices of salient segments
-            indices = sad.calculate_salient_indices(y)
-            # write to file
-            for line in prepare_save_line(track, indices, sad.window_size):
-                wf.write(line)
+            # in case some instruments in moisesdb does not exist
+            if not target_folder.exists():
+                for wav_path in target_folder.glob("*.wav"):
+                    waveform, sample_rate = torchaudio.load(wav_path)
+                    waveforms.append(waveform)
+
+                # get audio data and transform to torch.Tensor
+                y = torch.sum(torch.stack(waveforms), dim=0)
+                # find indices of salient segments
+                indices = sad.calculate_salient_indices(y)
+                # write to file
+                for line in prepare_save_line(track, indices, sad.window_size):
+                    wf.write(line)
+            else:
+                pass
+
     return None
 
 
