@@ -1,11 +1,9 @@
 import argparse
-import json
 import typing as tp
 from pathlib import Path
 
 from moisesdb.dataset import MoisesDB
 import torch
-import torchaudio
 from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
 
@@ -97,11 +95,16 @@ def run_program(
                 # find indices of salient segments
                 indices = sad.calculate_salient_indices(y)
                 # write to file
-                for line in prepare_save_line(track, indices, sad.window_size):
+                for line in prepare_save_line(track, indices, int(sad.window_size)):
                     wf.write(line)
 
             else:
                 print("not exist")
+                # TODO:
+                #  1. PICK ANY "STEM" INSIDE THE TRACK FOLDER
+                #  2. FIND THE LENGTH OF THAT "STEM"
+                #  3. CREATE THE EMPTY TENSOR
+                #  4. WRITE TO LINE LIKE ABOVE'S TRUE CASE
 
 
     return None

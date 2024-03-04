@@ -1,6 +1,7 @@
 import typing as tp
 
 import torch
+import torchaudio
 
 
 class SAD:
