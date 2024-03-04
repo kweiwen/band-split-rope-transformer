@@ -1,4 +1,5 @@
 import argparse
+import json
 import typing as tp
 from pathlib import Path
 
@@ -85,24 +86,23 @@ def run_program(
     """
     with open(file_path, 'w') as wf:
         for track in tqdm(db.tracks):
-            waveforms = []
-            target_folder = Path(db.data_path) / track / target
+            track_folder = Path(db.data_path) / track
+            vocals_folder_exists = any(folder.name.lower().count("vocals") > 0 for folder in track_folder.iterdir() if folder.is_dir())
 
-            # in case some instruments in moisesdb does not exist
-            if not target_folder.exists():
-                for wav_path in target_folder.glob("*.wav"):
-                    waveform, sample_rate = torchaudio.load(wav_path)
-                    waveforms.append(waveform)
+            if vocals_folder_exists:
+                # there might be multiple waveforms in a single folder
+                target_folder = Path(db.data_path) / track / target
+                y = sad.load_and_sum_waveforms(target_folder)
 
-                # get audio data and transform to torch.Tensor
-                y = torch.sum(torch.stack(waveforms), dim=0)
                 # find indices of salient segments
                 indices = sad.calculate_salient_indices(y)
                 # write to file
                 for line in prepare_save_line(track, indices, sad.window_size):
                     wf.write(line)
+
             else:
-                pass
+                print("not exist")
+
 
     return None
 
