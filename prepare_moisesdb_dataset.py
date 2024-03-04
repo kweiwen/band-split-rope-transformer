@@ -90,10 +90,10 @@ def run_program(
             vocals_folder_exists = any(folder.name.lower().count("vocals") > 0 for folder in track_folder.iterdir() if folder.is_dir())
 
             if vocals_folder_exists:
-                # there might be multiple waveforms in a single folder
+                # in moisesdb, there might be multiple waveforms in a single folder
                 target_folder = Path(db.data_path) / track / target
+                # load from target folder and sum up all wavefroms
                 y = sad.load_and_sum_waveforms(target_folder)
-
                 # find indices of salient segments
                 indices = sad.calculate_salient_indices(y)
                 # write to file
