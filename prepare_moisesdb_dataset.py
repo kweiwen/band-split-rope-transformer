@@ -99,7 +99,7 @@ def run_program(
                     wf.write(line)
 
             else:
-                print("not exist")
+                print("selected target does not exist")
                 # TODO:
                 #  1. PICK ANY "STEM" INSIDE THE TRACK FOLDER
                 #  2. FIND THE LENGTH OF THAT "STEM"
