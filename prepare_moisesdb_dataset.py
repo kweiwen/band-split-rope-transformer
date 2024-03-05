@@ -83,19 +83,15 @@ def run_program(
     Saves track's name and fragments indices to provided .txt file.
     """
     with open(file_path, 'w') as wf:
-        for track in tqdm(db.tracks):
-            track_folder = Path(db.data_path) / track
-            vocals_folder_exists = any(folder.name.lower().count("vocals") > 0 for folder in track_folder.iterdir() if folder.is_dir())
+        for track in tqdm(db):
 
-            if vocals_folder_exists:
-                # in moisesdb, there might be multiple waveforms in a single folder
-                target_folder = Path(db.data_path) / track / target
-                # load from target folder and sum up all wavefroms
-                y = sad.load_and_sum_waveforms(target_folder)
+            if target in list(track.stems.keys()):
+                # load audio mixture from track
+                y = torch.tensor(track.audio)
                 # find indices of salient segments
                 indices = sad.calculate_salient_indices(y)
                 # write to file
-                for line in prepare_save_line(track, indices, int(sad.window_size)):
+                for line in prepare_save_line(track.id, indices, int(sad.window_size)):
                     wf.write(line)
 
             else:
