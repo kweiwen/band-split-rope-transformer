@@ -18,7 +18,7 @@ parser.add_argument(
     '--input-dir',
     type=str,
     required=False,
-    default= "./moisesdb/moisesdb_v0.1",
+    default= "./moisesdb",
     help="Path to directory with moisesdb dataset"
 )
 parser.add_argument(
@@ -138,7 +138,7 @@ def main(
         data_path=db_dir,
         sample_rate=44100
     )
-    train_db_subset, test_db_subset = split_dataset(db)
+    test_db_subset, train_db_subset = split_dataset(db)
 
 
     # initialize Source Activity Detector
