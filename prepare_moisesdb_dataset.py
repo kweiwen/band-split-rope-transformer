@@ -18,7 +18,7 @@ parser.add_argument(
     '--input-dir',
     type=str,
     required=False,
-    default= "./moisesdb",
+    default= "../moisesdb",
     help="Path to directory with moisesdb dataset"
 )
 parser.add_argument(
