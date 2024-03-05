@@ -344,7 +344,7 @@ class moisesdbDataset(Dataset):
             if file_name not in filename2label:
                 filename2label[file_name] = i
                 i += 1
-            filepath_template = self.file_dir / "train" / f"{file_name}" / "{}.wav"
+            filepath_template = self.file_dir / ".." / "dataset" / "moisesdb" / "moisesdb_v0.1" / f"{file_name}"
             if self.preload_dataset:
                 mix_segment, tgt_segment = self.load_files(
                     str(filepath_template), (int(start_idx), int(end_idx))
@@ -376,14 +376,24 @@ class moisesdbDataset(Dataset):
             y = torch.mean(y, dim=0, keepdim=True)
         return y
 
+    def parse_fp_target(self, fp: str, target: str):
+        uuid = Path(fp).parts[-1]
+        for track in self.db:
+            if track.id == uuid and target == "mixture":
+                return track.audio
+            elif track.id == uuid:
+                return track.stems['target']
+            else:
+                return RuntimeError
+
     def load_files(
             self, fp_template: str, indices: tp.Tuple[int, int],
     ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
         mix_segment = self.load_file(
-            fp_template.format('mixture'), indices
+            self.parse_fp_target(fp_template, 'mixture'), indices
         )
         tgt_segment = self.load_file(
-            fp_template.format(self.target), indices
+            self.parse_fp_target(fp_template, self.target), indices
         )
         max_norm = max(
             mix_segment.abs().max(), tgt_segment.abs().max()
