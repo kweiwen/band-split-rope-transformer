@@ -18,7 +18,7 @@ parser.add_argument(
     '--input-dir',
     type=str,
     required=False,
-    default= "..//..//dataset//moisesdb",
+    default= "./moisesdb/moisesdb_v0.1",
     help="Path to directory with moisesdb dataset"
 )
 parser.add_argument(
@@ -26,7 +26,7 @@ parser.add_argument(
     '--output-dir',
     type=str,
     required=False,
-    default= "D://Project//band-split-rope-transformer//files",
+    default= "./files",
     help="Path to directory where output .txt file is saved"
 )
 parser.add_argument(
