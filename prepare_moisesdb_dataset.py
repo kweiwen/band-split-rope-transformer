@@ -122,7 +122,7 @@ def main(
     split = None if subset == 'test' else split
 
     db = MoisesDB(
-        data_path='..//..//dataset//moisesdb//moisesdb_v0.1',
+        data_path='..//..//dataset//moisesdb',
         sample_rate=44100
     )
     # initialize Source Activity Detector
