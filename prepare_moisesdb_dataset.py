@@ -18,7 +18,7 @@ parser.add_argument(
     '--input-dir',
     type=str,
     required=False,
-    default= "D://dataset//moisesdb//moisesdb_v0.1",
+    default= "..//..//dataset//moisesdb",
     help="Path to directory with moisesdb dataset"
 )
 parser.add_argument(
@@ -135,7 +135,7 @@ def main(
 
     # initialize moisesdb parser
     db = MoisesDB(
-        data_path='..//..//dataset//moisesdb',
+        data_path=db_dir,
         sample_rate=44100
     )
     train_db_subset, test_db_subset = split_dataset(db)
