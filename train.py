@@ -24,23 +24,26 @@ def initialize_loaders(cfg: DictConfig) -> tp.Tuple[DataLoader, DataLoader]:
     """
     Initializes train and validation dataloaders from configuration file.
     """
-    train_dataset = musdbDataset(
+    train_musdb_dataset = musdbDataset(
         **cfg.train_dataset,
     )
-    train_dataset = moisesdbDataset(
+    train_moisesdb_dataset = moisesdbDataset(
         **cfg.train_dataset,
     )
     train_loader = DataLoader(
-        train_dataset,
+        train_moisesdb_dataset,
         **cfg.train_loader,
         collate_fn=collate_fn
     )
     if hasattr(cfg, 'val_dataset'):
-        val_dataset = musdbDataset(
+        val_musdb_dataset = musdbDataset(
+            **cfg.val_dataset,
+        )
+        val_moisesdb_dataset = moisesdbDataset(
             **cfg.val_dataset,
         )
         val_loader = DataLoader(
-            val_dataset,
+            val_moisesdb_dataset,
             **cfg.val_loader,
             collate_fn=collate_fn
         )

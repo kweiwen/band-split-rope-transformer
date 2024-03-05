@@ -320,7 +320,7 @@ class moisesdbDataset(Dataset):
 
         if txt_path is None and txt_dir is not None:
             mode = 'train' if self.is_training else 'valid'
-            self.txt_path = Path(txt_dir) / f"{target}_{mode}.txt"
+            self.txt_path = Path(txt_dir) / f"{target}_moisesdb_{mode}.txt"
         elif txt_path is not None and txt_dir is None:
             self.txt_path = Path(txt_path)
         else:
