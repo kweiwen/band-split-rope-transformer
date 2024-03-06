@@ -344,7 +344,7 @@ class moisesdbDataset(Dataset):
             if file_name not in filename2label:
                 filename2label[file_name] = i
                 i += 1
-            filepath_template = self.file_dir / ".." / "dataset" / "moisesdb" / "moisesdb_v0.1" / f"{file_name}"
+            filepath_template = self.file_dir / "moisesdb" / "moisesdb_v0.1" / f"{file_name}"
             if self.preload_dataset:
                 mix_segment, tgt_segment = self.load_files(
                     str(filepath_template), (int(start_idx), int(end_idx))
