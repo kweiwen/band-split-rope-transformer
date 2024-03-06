@@ -356,44 +356,53 @@ class moisesdbDataset(Dataset):
                 )
         return filelist
 
+    def load_and_sum_waveforms(self, target_folder, offset, num_frames):
+        waveforms = []
+        for wav_path in target_folder.glob("*.wav"):
+            waveform, sr = torchaudio.load(wav_path, frame_offset=offset, num_frames=num_frames, channels_first=True)
+            waveforms.append(waveform)
+
+        # get audio data and transform to torch.Tensor
+        y = torch.sum(torch.stack(waveforms), dim=0)
+        return y, sr
+
     def load_file(
             self,
-            file_path: str,
+            folder_path: str,
+            target: str,
             indices: tp.Tuple[int, int]
     ) -> torch.Tensor:
-        assert Path(file_path).is_file(), f"There is no such file - {file_path}."
+        assert Path(folder_path).is_dir(), f"There is no such folder - {folder_path}."
 
         offset = indices[0]
         num_frames = indices[1] - indices[0]
-        y, sr = torchaudio.load(
-            file_path,
-            frame_offset=offset,
-            num_frames=num_frames,
-            channels_first=True
-        )
-        assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
+
+        if target == "mixture":
+            # iterate all folder in the path
+            paths = [x for x in Path(folder_path).iterdir() if x.is_dir()]
+            waveforms = []
+            for path in paths:
+                waveform, sr = self.load_and_sum_waveforms(path, offset, num_frames)
+                waveforms.append(waveform)
+                assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
+            # stack and sum the waveforms
+            y = torch.sum(torch.stack(waveforms), dim=0)
+        else:
+            y, sr = self.load_and_sum_waveforms(Path(folder_path) / target, offset, num_frames)
+            assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
+
         if self.is_mono:
             y = torch.mean(y, dim=0, keepdim=True)
         return y
 
-    def parse_fp_target(self, fp: str, target: str):
-        uuid = Path(fp).parts[-1]
-        for track in self.db:
-            if track.id == uuid and target == "mixture":
-                return track.audio
-            elif track.id == uuid:
-                return track.stems['target']
-            else:
-                return RuntimeError
-
     def load_files(
             self, fp_template: str, indices: tp.Tuple[int, int],
     ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        mix_segment = self.load_file(
-            self.parse_fp_target(fp_template, 'mixture'), indices
-        )
         tgt_segment = self.load_file(
-            self.parse_fp_target(fp_template, self.target), indices
+            fp_template, self.target, indices
+        )
+        mix_segment = self.load_file(
+            fp_template, 'mixture', indices
         )
         max_norm = max(
             mix_segment.abs().max(), tgt_segment.abs().max()

@@ -40,16 +40,6 @@ class SAD:
         y = torch.stack(y, dim=-2)
         return y
 
-    def load_and_sum_waveforms(self, target_folder):
-        waveforms = []
-        for wav_path in target_folder.glob("*.wav"):
-            waveform, sample_rate = torchaudio.load(wav_path)
-            waveforms.append(waveform)
-
-        # get audio data and transform to torch.Tensor
-        y = torch.sum(torch.stack(waveforms), dim=0)
-        return y
-
     @staticmethod
     def calculate_rms(y: torch.Tensor):
         """
