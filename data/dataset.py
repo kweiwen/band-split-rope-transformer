@@ -357,6 +357,12 @@ class moisesdbDataset(Dataset):
         return filelist
 
     def load_and_sum_waveforms(self, target_folder, offset, num_frames):
+        '''
+        :param target_folder:
+        :param offset:
+        :param num_frames:
+        :return:
+        '''
         waveforms = []
         for wav_path in target_folder.glob("*.wav"):
             waveform, sr = torchaudio.load(wav_path, frame_offset=offset, num_frames=num_frames, channels_first=True)
