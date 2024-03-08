@@ -4,6 +4,7 @@ from pathlib import Path
 
 from moisesdb.dataset import MoisesDB
 import torch
+import torchaudio
 import numpy as np
 from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
@@ -89,6 +90,65 @@ def split_dataset(db: MoisesDB, ratio: float = 0.2):
     train_set = [db[i] for i in indices[n_test_songs:]]
 
     return test_set, train_set
+
+def pad_tracks_to_equal_length(db_dir:str = 'D:\zengkuiwen\Desktop\REFACTOR'):
+    # each subdirectory may contain one or more WAV files,
+    # each representing a specific recording or sample relevant to the instrument category.
+    #
+    # ├─02ee37da-eea3-42b4-83bf-ab7f243afa13
+    # │  │  data.json
+    # │  │
+    # │  ├─bass
+    # │  │      6ffbc14a-572b-43d7-bbbb-1b5e7fc62889.wav
+    # │  │
+    # │  ├─bowed_strings
+    # │  │      df7686dc-c383-4727-bf1d-1bf1e09dec18.wav
+    # │  │
+    # │  ├─drums
+    # │  │      01eb58f6-a186-4d5e-adb3-f47189f4a5e9.wav
+    # │  │      18d5c271-0d2a-4d94-b069-6cb6b8e80e80.wav
+    # │  │      3c8c6f15-9418-4352-acfa-53b29a494dad.wav
+    # │  │      91f922b7-3fae-4f87-9da7-837c5537b5dc.wav
+    # │  │      c2f6171e-c52f-49fd-8d7b-ff00dad82820.wav
+    # │  │
+    # │  ├─guitar
+    # │  │      43896fa4-9f20-4603-9254-074347e76631.wav
+    # │  │      c08b4e56-1010-4f3e-85f4-dcfc2bde216f.wav
+    # │  │
+    # │  ├─percussion
+    # │  │      55b0cc6d-8e71-4291-8c6e-d3fffc1e06a3.wav
+    # │  │
+    # │  ├─piano
+    # │  │      5df8b123-d37b-4ff7-8abe-721084b9ea12.wav
+    # │  │      a1f763a8-4ee4-496d-a2fa-3f94fe605755.wav
+    # │  │
+    # │  └─vocals
+    # │          7c555f5b-2ef6-44af-acc3-9484d12412b0.wav
+    # next track...
+
+    db = MoisesDB(
+        data_path=db_dir,
+        sample_rate=44100
+    )
+
+    for track in db:
+        for stem_key, stem in track.stems.items():
+
+            # detect the length between stem and mixture
+            if not len(stem[0]) == len(track.audio[0]):
+                # there are multiple sources in a single stem
+                for source_key, element_path in track.sources[stem_key].items():
+                    temp, sample_rate = torchaudio.load(element_path[0])
+                    # detect the length between source and mixture
+                    if not (len(temp[0]) == len(track.audio[0])):
+                        # calculate difference
+                        padding_needed = len(track.audio[0]) - len(temp[0])
+                        # create padding
+                        padding = torch.zeros((temp.shape[0], padding_needed))
+                        # concatenate padding
+                        temp_padded = torch.cat((temp, padding), 1)
+                        # save file
+                        torchaudio.save(element_path[0], temp_padded, 44100)
 
 def run_program(
         file_path: Path,
