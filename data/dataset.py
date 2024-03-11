@@ -358,10 +358,6 @@ class moisesdbDataset(Dataset):
 
     def load_and_sum_waveforms(self, target_folder, offset, num_frames):
         '''
-        :param target_folder:
-        :param offset:
-        :param num_frames:
-        :return:
         '''
         waveforms = []
         for wav_path in target_folder.glob("*.wav"):
@@ -450,7 +446,7 @@ class moisesdbDataset(Dataset):
             # get random file to mix source from
             fp_template_to_add, indices_to_add = random.choice(self.filelist)
             segment_to_add = self.load_file(
-                fp_template_to_add.format(target), indices_to_add
+                fp_template_to_add, target, indices_to_add
             )
             mix_segment += segment_to_add
             if target == self.target:
