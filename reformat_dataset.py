@@ -76,7 +76,7 @@ def main(
         sample_rate=44100
     )
 
-    progression_bar = tqdm(db[:2])
+    progression_bar = tqdm(db)
     for track in progression_bar:
         filepath_template = str(Path(track.path) / "{}.wav")
 
