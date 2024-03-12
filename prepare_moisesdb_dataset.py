@@ -19,7 +19,7 @@ parser.add_argument(
     '--input-dir',
     type=str,
     required=False,
-    default= "../moisesdb",
+    default= "../../dataset/moisesdb",
     help="Path to directory with moisesdb dataset"
 )
 parser.add_argument(
@@ -220,6 +220,27 @@ def main(
 
     return None
 
+def check_waveform_consistency(db_dir: str, target: str, index: int):
+    '''
+    '''
+    # initialize moisesdb parser
+    db = MoisesDB(
+        data_path=db_dir,
+        sample_rate=44100
+    )
+
+    temp = db[index].stems[target]
+    waveforms = []
+    for source_key, element_path in db[index].sources[target].items():
+        data, sr = torchaudio.load(element_path[0])
+        waveforms.append(data)
+
+    tensor = sum(waveforms)
+    tensor_to_array = tensor.numpy()
+    are_equal = np.array_equal(temp, tensor_to_array)
+    are_close = np.allclose(temp.astype(float), tensor_to_array.astype(float))
+
+    return are_equal, are_close
 
 if __name__ == '__main__':
     main(
