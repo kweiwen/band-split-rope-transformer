@@ -190,6 +190,92 @@ class musdbDataset(Dataset):
     def __len__(self):
         return len(self.filelist)
 
+class moisesdbDataset(musdbDataset):
+    """
+    Dataset class for working with train/validation data from MOISESDB dataset.
+    """
+    TARGETS: tp.Set[str] = {'vocals', 'bass', 'drums', 'other'}
+    EXTENSIONS: tp.Set[str] = {'.wav', '.mp3'}
+
+    def __init__(
+            self,
+            file_dir: str,
+            txt_dir: str = None,
+            txt_path: str = None,
+            target: str = 'vocals',
+            preload_dataset: bool = False,
+            is_mono: bool = False,
+            is_training: bool = True,
+            sr: int = 44100,
+            silent_prob: float = 0.1,
+            mix_prob: float = 0.1,
+            mix_tgt_too: bool = False,
+    ):
+        # super().__init__(file_dir, txt_dir, txt_path, target, preload_dataset, is_mono, is_training, sr, silent_prob, mix_prob, mix_tgt_too)
+        self.file_dir = Path(file_dir)
+        self.is_training = is_training
+        self.target = target
+        self.sr = sr
+
+        if txt_path is None and txt_dir is not None:
+            mode = 'train' if self.is_training else 'valid'
+            self.txt_path = Path(txt_dir) / f"{target}_moisesdb_{mode}.txt"
+        elif txt_path is not None and txt_dir is None:
+            self.txt_path = Path(txt_path)
+        else:
+            raise ValueError("You need to specify either 'txt_path' or 'txt_dir'.")
+
+        self.preload_dataset = preload_dataset
+        self.is_mono = is_mono
+        self.filelist = self.get_filelist()
+
+        # augmentations
+        self.silent_prob = silent_prob
+        self.mix_prob = mix_prob
+        self.mix_tgt_too = mix_tgt_too
+
+
+    def get_filelist(self) -> tp.List[tp.Tuple[str, tp.Tuple[int, int]]]:
+        filename2label = {}
+        filelist = []
+        i = 0
+        for line in tqdm(open(self.txt_path, 'r').readlines()):
+            file_name, start_idx, end_idx = line.split('\t')
+            if file_name not in filename2label:
+                filename2label[file_name] = i
+                i += 1
+            filepath_template = self.file_dir / "moisesdb" / "moisesdb_v0.1" / f"{file_name}" / "{}.wav"
+            if self.preload_dataset:
+                mix_segment, tgt_segment = self.load_files(
+                    str(filepath_template), (int(start_idx), int(end_idx))
+                )
+                filelist.append((mix_segment, tgt_segment))
+            else:
+                filelist.append(
+                    (str(filepath_template), (int(start_idx), int(end_idx)))
+                )
+        return filelist
+
+    def load_file(
+            self,
+            file_path: str,
+            indices: tp.Tuple[int, int]
+    ) -> torch.Tensor:
+        assert Path(file_path).is_file(), f"There is no such file - {file_path}."
+
+        offset = indices[0]
+        num_frames = indices[1] - indices[0]
+        y, sr = torchaudio.load(
+            file_path,
+            frame_offset=offset,
+            num_frames=num_frames,
+            channels_first=True
+        )
+        assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
+        if self.is_mono:
+            y = torch.mean(y, dim=0, keepdim=True)
+        return y
+
 class EvalSourceSeparationDataset(Dataset):
     """
     Dataset class for working with test data from MUSDB18 dataset.
@@ -291,89 +377,3 @@ class EvalSourceSeparationDataset(Dataset):
 
     def __len__(self):
         return len(self.filelist)
-
-class moisesdbDataset(musdbDataset):
-    """
-    Dataset class for working with train/validation data from MOISESDB dataset.
-    """
-    TARGETS: tp.Set[str] = {'vocals', 'bass', 'drums', 'other'}
-    EXTENSIONS: tp.Set[str] = {'.wav', '.mp3'}
-
-    def __init__(
-            self,
-            file_dir: str,
-            txt_dir: str = None,
-            txt_path: str = None,
-            target: str = 'vocals',
-            preload_dataset: bool = False,
-            is_mono: bool = False,
-            is_training: bool = True,
-            sr: int = 44100,
-            silent_prob: float = 0.1,
-            mix_prob: float = 0.1,
-            mix_tgt_too: bool = False,
-    ):
-        # super().__init__(file_dir, txt_dir, txt_path, target, preload_dataset, is_mono, is_training, sr, silent_prob, mix_prob, mix_tgt_too)
-        self.file_dir = Path(file_dir)
-        self.is_training = is_training
-        self.target = target
-        self.sr = sr
-
-        if txt_path is None and txt_dir is not None:
-            mode = 'train' if self.is_training else 'valid'
-            self.txt_path = Path(txt_dir) / f"{target}_moisesdb_{mode}.txt"
-        elif txt_path is not None and txt_dir is None:
-            self.txt_path = Path(txt_path)
-        else:
-            raise ValueError("You need to specify either 'txt_path' or 'txt_dir'.")
-
-        self.preload_dataset = preload_dataset
-        self.is_mono = is_mono
-        self.filelist = self.get_filelist()
-
-        # augmentations
-        self.silent_prob = silent_prob
-        self.mix_prob = mix_prob
-        self.mix_tgt_too = mix_tgt_too
-
-
-    def get_filelist(self) -> tp.List[tp.Tuple[str, tp.Tuple[int, int]]]:
-        filename2label = {}
-        filelist = []
-        i = 0
-        for line in tqdm(open(self.txt_path, 'r').readlines()):
-            file_name, start_idx, end_idx = line.split('\t')
-            if file_name not in filename2label:
-                filename2label[file_name] = i
-                i += 1
-            filepath_template = self.file_dir / "moisesdb" / "moisesdb_v0.1" / f"{file_name}" / "{}.wav"
-            if self.preload_dataset:
-                mix_segment, tgt_segment = self.load_files(
-                    str(filepath_template), (int(start_idx), int(end_idx))
-                )
-                filelist.append((mix_segment, tgt_segment))
-            else:
-                filelist.append(
-                    (str(filepath_template), (int(start_idx), int(end_idx)))
-                )
-        return filelist
-
-    def load_file(
-            self,
-            file_path: str,
-            indices: tp.Tuple[int, int]
-    ) -> torch.Tensor:
-        assert Path(file_path).is_file(), f"There is no such file - {file_path}."
-
-        offset = indices[0]
-        num_frames = indices[1] - indices[0]
-        y, sr = torchaudio.load(
-            file_path,
-            frame_offset=offset,
-            num_frames=num_frames,
-            channels_first=True
-        )
-        assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
-        if self.is_mono:
-            y = torch.mean(y, dim=0, keepdim=True)
-        return y
