@@ -42,13 +42,13 @@ def main(db_dir: str,) -> None:
 
         # save vocals, drums, bass
         load_stem(filepath_template, track.stems, 'vocals', temp)
-        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("vocals")))
+        progression_bar.set_description("track id: [%s] stems: [%s]" % (track.id, str("vocals")))
 
         load_stem(filepath_template, track.stems, 'drums', temp)
-        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("drums")))
+        progression_bar.set_description("track id: [%s] stems: [%s]" % (track.id, str("drums")))
 
         load_stem(filepath_template, track.stems, 'bass', temp)
-        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("bass")))
+        progression_bar.set_description("track id: [%s] stems: [%s]" % (track.id, str("bass")))
 
         # save other
         keys_to_remove = ['vocals', 'bass', 'drums']
@@ -59,7 +59,7 @@ def main(db_dir: str,) -> None:
             temp_array += adjusted_arr
         other = torch.from_numpy(temp_array)
         torchaudio.save(uri=filepath_template.format('other'), src=other, sample_rate=44100, format='wav')
-        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("other")))
+        progression_bar.set_description("track id: [%s] stems: [%s]" % (track.id, str("other")))
 
 def load_stem(fp, stems, target, temp):
     try:
