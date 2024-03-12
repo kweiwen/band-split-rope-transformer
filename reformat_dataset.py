@@ -86,7 +86,7 @@ def main(
         bass = torch.from_numpy(track.stems['bass'])
 
         length = mixture.size(1)
-        temp = torch.zeros(mixture.size(1))
+        temp = torch.zeros(mixture.size())
 
         torchaudio.save(uri=filepath_template.format('mixture'), src=mixture, sample_rate=44100, format='wav')
         torchaudio.save(uri=filepath_template.format('vocals'), src=vocals, sample_rate=44100, format='wav')
@@ -96,7 +96,7 @@ def main(
         # exception
         keys_to_remove = ['vocals', 'bass', 'drums']
         other_dict = {key: value for key, value in track.stems.items() if key not in keys_to_remove}
-        temp_array = np.zeros(mixture.size(1))
+        temp_array = np.zeros(mixture.size())
         for arr in other_dict.values():
             adjusted_arr = adjust_array(arr, length)
             temp_array += adjusted_arr
