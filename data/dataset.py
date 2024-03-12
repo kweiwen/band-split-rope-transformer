@@ -190,7 +190,6 @@ class musdbDataset(Dataset):
     def __len__(self):
         return len(self.filelist)
 
-
 class EvalSourceSeparationDataset(Dataset):
     """
     Dataset class for working with test data from MUSDB18 dataset.
@@ -293,12 +292,13 @@ class EvalSourceSeparationDataset(Dataset):
     def __len__(self):
         return len(self.filelist)
 
-class moisesdbDataset(Dataset):
+class moisesdbDataset(musdbDataset):
     """
     Dataset class for working with train/validation data from MOISESDB dataset.
     """
     TARGETS: tp.Set[str] = {'vocals', 'bass', 'drums', 'other'}
     EXTENSIONS: tp.Set[str] = {'.wav', '.mp3'}
+
     def __init__(
             self,
             file_dir: str,
@@ -313,6 +313,7 @@ class moisesdbDataset(Dataset):
             mix_prob: float = 0.1,
             mix_tgt_too: bool = False,
     ):
+        # super().__init__(file_dir, txt_dir, txt_path, target, preload_dataset, is_mono, is_training, sr, silent_prob, mix_prob, mix_tgt_too)
         self.file_dir = Path(file_dir)
         self.is_training = is_training
         self.target = target
@@ -335,6 +336,7 @@ class moisesdbDataset(Dataset):
         self.mix_prob = mix_prob
         self.mix_tgt_too = mix_tgt_too
 
+
     def get_filelist(self) -> tp.List[tp.Tuple[str, tp.Tuple[int, int]]]:
         filename2label = {}
         filelist = []
@@ -344,7 +346,7 @@ class moisesdbDataset(Dataset):
             if file_name not in filename2label:
                 filename2label[file_name] = i
                 i += 1
-            filepath_template = self.file_dir / "moisesdb" / "moisesdb_v0.1" / f"{file_name}"
+            filepath_template = self.file_dir / "moisesdb" / "moisesdb_v0.1" / f"{file_name}" / "{}.wav"
             if self.preload_dataset:
                 mix_segment, tgt_segment = self.load_files(
                     str(filepath_template), (int(start_idx), int(end_idx))
@@ -356,142 +358,22 @@ class moisesdbDataset(Dataset):
                 )
         return filelist
 
-    def load_and_sum_waveforms(self, target_folder, offset, num_frames):
-        '''
-        '''
-        waveforms = []
-        for wav_path in target_folder.glob("*.wav"):
-            waveform, sr = torchaudio.load(wav_path, frame_offset=offset, num_frames=num_frames, channels_first=True)
-            waveforms.append(waveform)
-
-        # get audio data and transform to torch.Tensor
-        y = torch.sum(torch.stack(waveforms), dim=0)
-        return y, sr
-
     def load_file(
             self,
-            folder_path: str,
-            target: str,
+            file_path: str,
             indices: tp.Tuple[int, int]
     ) -> torch.Tensor:
-        assert Path(folder_path).is_dir(), f"There is no such folder - {folder_path}."
+        assert Path(file_path).is_file(), f"There is no such file - {file_path}."
 
         offset = indices[0]
         num_frames = indices[1] - indices[0]
-
-        if target == "mixture":
-            # iterate all folder in the path
-            paths = [x for x in Path(folder_path).iterdir() if x.is_dir()]
-            waveforms = []
-            for path in paths:
-                waveform, sr = self.load_and_sum_waveforms(path, offset, num_frames)
-                waveforms.append(waveform)
-                assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
-            # stack and sum the waveforms
-            y = torch.sum(torch.stack(waveforms), dim=0)
-        else:
-            y, sr = self.load_and_sum_waveforms(Path(folder_path) / target, offset, num_frames)
-            assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
-
+        y, sr = torchaudio.load(
+            file_path,
+            frame_offset=offset,
+            num_frames=num_frames,
+            channels_first=True
+        )
+        assert sr == self.sr, f"Sampling rate should be equal {self.sr}, not {sr}."
         if self.is_mono:
             y = torch.mean(y, dim=0, keepdim=True)
         return y
-
-    def load_files(
-            self, fp_template: str, indices: tp.Tuple[int, int],
-    ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        tgt_segment = self.load_file(
-            fp_template, self.target, indices
-        )
-        mix_segment = self.load_file(
-            fp_template, 'mixture', indices
-        )
-        max_norm = max(
-            mix_segment.abs().max(), tgt_segment.abs().max()
-        )
-        mix_segment /= max_norm
-        tgt_segment /= max_norm
-        return (
-            mix_segment, tgt_segment
-        )
-
-    @staticmethod
-    def imitate_silent_segments(
-            mix_segment: torch.Tensor,
-            tgt_segment: torch.Tensor
-    ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        return (
-            mix_segment - tgt_segment,
-            torch.zeros_like(tgt_segment)
-        )
-
-    def mix_segments(
-            self,
-            tgt_segment: torch.Tensor,
-    ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Creating new mixture and new target from target file and random multiple sources
-        """
-        # decide how many sources to mix
-        if not self.mix_tgt_too:
-            self.TARGETS.discard(self.target)
-        n_sources = random.randrange(1, len(self.TARGETS) + 1)
-        # decide which sources to mix
-        targets_to_add = random.sample(
-            self.TARGETS, n_sources
-        )
-        # create new mix segment
-        mix_segment = tgt_segment.clone()
-        for target in targets_to_add:
-            # get random file to mix source from
-            fp_template_to_add, indices_to_add = random.choice(self.filelist)
-            segment_to_add = self.load_file(
-                fp_template_to_add, target, indices_to_add
-            )
-            mix_segment += segment_to_add
-            if target == self.target:
-                tgt_segment += segment_to_add
-        return (
-            mix_segment, tgt_segment
-        )
-
-    def augment(
-            self,
-            mix_segment: torch.Tensor,
-            tgt_segment: torch.Tensor
-    ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        if self.is_training:
-            # dropping target
-            if random.random() < self.silent_prob:
-                mix_segment, tgt_segment = self.imitate_silent_segments(
-                    mix_segment, tgt_segment
-                )
-            # mixing with other sources
-            if random.random() < self.mix_prob:
-                mix_segment, tgt_segment = self.mix_segments(
-                    tgt_segment
-                )
-        return mix_segment, tgt_segment
-
-    def __getitem__(
-            self,
-            index: int
-    ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Each Tensor's output shape: [n_channels, frames_in_segment]
-        """
-        # load files
-        if self.preload_dataset:
-            mix_segment, tgt_segment = self.filelist[index]
-        else:
-            mix_segment, tgt_segment = self.load_files(*self.filelist[index])
-
-        # augmentations related to mixing/dropping sources
-        mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
-
-        return (
-            mix_segment, tgt_segment
-        )
-
-    def __len__(self):
-        return len(self.filelist)
