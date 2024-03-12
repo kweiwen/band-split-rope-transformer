@@ -1,18 +1,12 @@
 import argparse
-import typing as tp
 from pathlib import Path
 
 from moisesdb.dataset import MoisesDB
 import torch
 import torch.nn.functional as F
 import torchaudio
-import numpy as np
-from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
-
-from data import SAD
-
-
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -23,53 +17,10 @@ parser.add_argument(
     default= "../../dataset/moisesdb",
     help="Path to directory with moisesdb dataset"
 )
-parser.add_argument(
-    '-o',
-    '--output-dir',
-    type=str,
-    required=False,
-    default= "./files",
-    help="Path to directory where output .txt file is saved"
-)
-parser.add_argument(
-    '--subset',
-    type=str,
-    required=False,
-    default='test',
-    help="Train/test subset of dataset to process"
-)
-parser.add_argument(
-    '--split',
-    type=str,
-    required=False,
-    default='train',
-    help="Train/valid split of train dataset. Used if subset=train"
-)
-parser.add_argument(
-    '--sad-cfg-path',
-    type=str,
-    required=False,
-    default="./conf/sad/default.yaml",
-    help="Path to Source Activity Detection config file"
-)
-parser.add_argument(
-    '-t',
-    '--targets',
-    nargs='+',
-    required=False,
-    default=["vocals"],
-    help="Target source. SAD will save salient fragments of vocal audio."
-)
+
 args = parser.parse_args()
 
-def main(
-        db_dir: str,
-        save_dir: str,
-        subset: str,
-        split: tp.Optional[str],
-        targets: tp.List[str],
-        sad_cfg_path: DictConfig
-) -> None:
+def main(db_dir: str,) -> None:
     # initialize moisesdb parser
     db = MoisesDB(
         data_path=db_dir,
@@ -136,12 +87,5 @@ def adjust_array(array, target_length):
         return array
 
 if __name__ == '__main__':
-    main(
-        args.input_dir,
-        args.output_dir,
-        args.subset,
-        args.split,
-        args.targets,
-        args.sad_cfg_path,
-    )
+    main(args.input_dir)
 
