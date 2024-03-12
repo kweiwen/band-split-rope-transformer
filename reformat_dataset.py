@@ -81,17 +81,12 @@ def main(
         filepath_template = str(Path(track.path) / "{}.wav")
 
         mixture = torch.from_numpy(track.audio)
-        vocals = torch.from_numpy(track.stems['vocals'])
-        drums = torch.from_numpy(track.stems['drums'])
-        bass = torch.from_numpy(track.stems['bass'])
-
         length = mixture.size(1)
         temp = torch.zeros(mixture.size())
 
-        torchaudio.save(uri=filepath_template.format('mixture'), src=mixture, sample_rate=44100, format='wav')
-        torchaudio.save(uri=filepath_template.format('vocals'), src=vocals, sample_rate=44100, format='wav')
-        torchaudio.save(uri=filepath_template.format('drums'), src=drums, sample_rate=44100, format='wav')
-        torchaudio.save(uri=filepath_template.format('bass'), src=bass, sample_rate=44100, format='wav')
+        load_stem(filepath_template, track.stems, 'vocals', temp)
+        load_stem(filepath_template, track.stems, 'drums', temp)
+        load_stem(filepath_template, track.stems, 'bass', temp)
 
         # exception
         keys_to_remove = ['vocals', 'bass', 'drums']
@@ -104,6 +99,13 @@ def main(
         torchaudio.save(uri=filepath_template.format('other'), src=other, sample_rate=44100, format='wav')
 
         print("saved!")
+
+def load_stem(fp, stems, target, temp):
+    try:
+        data = torch.from_numpy(stems[target])
+    except KeyError:
+        data = temp
+    torchaudio.save(uri=fp.format(target), src=data, sample_rate=44100, format='wav')
 
 def adjust_array(array, target_length):
     current_length = array.shape[1]
