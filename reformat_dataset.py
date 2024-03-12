@@ -75,20 +75,30 @@ def main(
         sample_rate=44100
     )
 
-    for track in db:
-        print(track.id)
-
+    progression_bar = tqdm(db[:2])
+    for track in progression_bar:
         filepath_template = str(Path(track.path) / "{}.wav")
 
+        # save mixture
+        progression_bar.set_description("track id: [%s] stems: [%s]" % (track.id, str("mixture")))
         mixture = torch.from_numpy(track.audio)
+        torchaudio.save(uri=filepath_template.format("mixture"), src=mixture, sample_rate=44100, format='wav')
+
+        # extract size and length from mixture
         length = mixture.size(1)
         temp = torch.zeros(mixture.size())
 
+        # save vocals, drums, bass
         load_stem(filepath_template, track.stems, 'vocals', temp)
-        load_stem(filepath_template, track.stems, 'drums', temp)
-        load_stem(filepath_template, track.stems, 'bass', temp)
+        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("vocals")))
 
-        # exception
+        load_stem(filepath_template, track.stems, 'drums', temp)
+        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("drums")))
+
+        load_stem(filepath_template, track.stems, 'bass', temp)
+        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("bass")))
+
+        # save other
         keys_to_remove = ['vocals', 'bass', 'drums']
         other_dict = {key: value for key, value in track.stems.items() if key not in keys_to_remove}
         temp_array = np.zeros(mixture.size())
@@ -97,8 +107,7 @@ def main(
             temp_array += adjusted_arr
         other = torch.from_numpy(temp_array)
         torchaudio.save(uri=filepath_template.format('other'), src=other, sample_rate=44100, format='wav')
-
-        print("saved!")
+        progression_bar.set_description("tack id: [%s] stems: [%s]" % (track.id, str("other")))
 
 def load_stem(fp, stems, target, temp):
     try:
