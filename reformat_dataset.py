@@ -4,6 +4,7 @@ from pathlib import Path
 
 from moisesdb.dataset import MoisesDB
 import torch
+import torch.nn.functional as F
 import torchaudio
 import numpy as np
 from omegaconf import OmegaConf, DictConfig
@@ -115,7 +116,7 @@ def load_stem(fp, stems, target, temp):
         if not temp.size() == data.size():
             length_diff = temp.size(1) - data.size(1)
             if length_diff > 0:
-                data = np.pad(data.numpy(), ((0, 0), (0, length_diff)), 'constant', constant_values=(0, 0))
+                data = F.pad(data, (0, length_diff))
             else:
                 data = data[:, :temp.size(1)]
     except KeyError:
