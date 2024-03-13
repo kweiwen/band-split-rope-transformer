@@ -151,38 +151,26 @@ def pad_tracks_to_equal_length(db_dir:str = 'D:\zengkuiwen\Desktop\REFACTOR'):
                         torchaudio.save(element_path[0], temp_padded, 44100)
 
 def run_program(
-        file_path: Path,
+        savepath: Path,
         target: str,
-        db: MoisesDB,
+        db: list,
         sad: SAD,
 ) -> None:
     """
     Saves track's name and fragments indices to provided .txt file.
     """
-    with open(file_path, 'w') as wf:
+    with open(savepath, 'w') as wf:
         for track in tqdm(db):
-
-            if target in list(track.stems.keys()):
-                # load audio mixture from track
-                y = torch.tensor(track.audio)
-                # find indices of salient segments
-                indices = sad.calculate_salient_indices(y)
-                # write to file
-                for line in prepare_save_line(track.id, indices, int(sad.window_size)):
-                    wf.write(line)
-
-            else:
-                pass
-                # TODO:
-                #  1. PICK ANY "STEM" INSIDE THE TRACK FOLDER
-                #  2. FIND THE LENGTH OF THAT "STEM"
-                #  3. CREATE THE EMPTY TENSOR
-                #  4. WRITE TO LINE LIKE ABOVE'S TRUE CASE
-
-
+            filepath_template = str(Path(track.path) / "{}.wav")
+            filepath = filepath_template.format("vocals")
+            # get audio data and transform to torch.Tensor
+            y, sr = torchaudio.load(filepath)
+            # find indices of salient segments
+            indices = sad.calculate_salient_indices(y)
+            # write to file
+            for line in prepare_save_line(track.name, indices, sad.window_size):
+                wf.write(line)
     return None
-
-
 
 def main(
         db_dir: str,
@@ -199,7 +187,6 @@ def main(
         sample_rate=44100
     )
     test_db_subset, train_db_subset = split_dataset(db)
-
 
     # initialize Source Activity Detector
     sad_cfg = OmegaConf.load(sad_cfg_path)
