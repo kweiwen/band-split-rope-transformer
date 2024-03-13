@@ -168,7 +168,7 @@ def run_program(
             # find indices of salient segments
             indices = sad.calculate_salient_indices(y)
             # write to file
-            for line in prepare_save_line(track.name, indices, sad.window_size):
+            for line in prepare_save_line(track.id, indices, sad.window_size):
                 wf.write(line)
     return None
 
