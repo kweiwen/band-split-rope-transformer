@@ -11,6 +11,9 @@ defaults:
   - _self_
 
 # data
+multiple_dataset:
+  musdb: False
+  moisesdb: True
 train_loader:
   batch_size: 1
   num_workers: 8

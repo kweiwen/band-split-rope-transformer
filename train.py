@@ -10,7 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
+from torch.utils.data import ConcatDataset, DataLoader
 from torch.optim import Optimizer, lr_scheduler
 
 from data import musdbDataset, moisesdbDataset, collate_fn
@@ -24,12 +24,15 @@ def initialize_loaders(cfg: DictConfig) -> tp.Tuple[DataLoader, DataLoader]:
     """
     Initializes train and validation dataloaders from configuration file.
     """
-    # train_musdb_dataset = musdbDataset(
-    #     **cfg.train_dataset,
-    # )
+    train_musdb_dataset = musdbDataset(
+        **cfg.train_dataset,
+    )
     train_moisesdb_dataset = moisesdbDataset(
         **cfg.train_dataset,
     )
+
+
+
     train_loader = DataLoader(
         train_moisesdb_dataset,
         **cfg.train_loader,
