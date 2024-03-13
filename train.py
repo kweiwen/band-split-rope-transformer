@@ -163,9 +163,10 @@ def my_app(cfg: DictConfig) -> None:
 
     log.info(OmegaConf.to_yaml(cfg))
 
-    log.info("Initializing loaders, featurizers.")
+    log.info("Initializing loaders.")
     train_loader, val_loader = initialize_loaders(cfg)
 
+    log.info("Initializing featurizers.")
     featurizer, inverse_featurizer = initialize_featurizer(cfg)
     augs = initialize_augmentations(cfg)
 
