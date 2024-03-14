@@ -132,3 +132,27 @@ class Mix(nn.Module):
             rms_background = self.calc_rms(y) / self.db2amp(db_scales)
             y += y_background * rms_background
         return y
+
+
+class Flip(nn.Module):
+    """
+    Randomly flips channels from fragment.
+    """
+
+    def __init__(
+            self,
+            p: float = 0.5,
+    ):
+        super().__init__()
+        self.p = p
+
+    def forward(self, y: torch.Tensor) -> torch.Tensor:
+        B, S, C, T = y.shape
+        device = y.device
+
+        if self.training and C == 2 and random.random() < self.p:
+            left = torch.ones((B, S, 1, 1), dtype=torch.uint8, device=device)
+            left = left.expand(-1, -1, -1, T)
+            right = 1 - left
+            y = torch.cat([y.gather(2, left), y.gather(2, right)], dim=2)
+        return y
