@@ -200,12 +200,15 @@ class PitchShift(nn.Module):
         device = y.device
 
         pitch = (self.max_semitone - self.min_semitone) * torch.rand(B, device=device) + self.min_semitone
-
         if self.training and random.random() < self.p:
             shifted_y = torch.zeros_like(y)
 
-            for i in range(B):
-                shifted_y[i] = torchaudio.functional.pitch_shift(y[i], sample_rate=self.sample_rate, n_steps=pitch[i].item())
+            for index in range(B):
+                # apply pitch shift
+                shifted_y[index] = torchaudio.functional.pitch_shift(
+                    waveform=y[index],
+                    sample_rate=self.sample_rate,
+                    n_steps=pitch[index].item())
             return shifted_y
         else:
             return y
