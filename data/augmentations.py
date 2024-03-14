@@ -2,6 +2,7 @@ import random
 
 import torch
 import torch.nn as nn
+import torchaudio
 
 
 class RandomCrop(nn.Module):
@@ -133,6 +134,7 @@ class Mix(nn.Module):
             y += y_background * rms_background
         return y
 
+
 class FlipStereo(nn.Module):
     """
     Randomly flips left and right channels from fragment.
@@ -156,6 +158,7 @@ class FlipStereo(nn.Module):
             y = torch.cat([y.gather(2, left), y.gather(2, right)], dim=2)
         return y
 
+
 class FlipPolarity(nn.Module):
     """
     Randomly flips polarity from fragment.
@@ -173,3 +176,36 @@ class FlipPolarity(nn.Module):
 
         if self.training and random.random() < self.p:
             return y.multiply(-1)
+
+
+class PitchShift(nn.Module):
+    """
+    Randomly apply pitch shifting on fragment.
+    """
+    def __init__(
+            self,
+            p: float = 0.5,
+            sample_rate: int = 44100,
+            min_semitone: float = -2,
+            max_semitone: float = 2,
+    ):
+        super().__init__()
+        self.p = p
+        self.sample_rate = sample_rate
+        self.min_semitone = min_semitone
+        self.max_semitone = max_semitone
+
+    def forward(self, y: torch.Tensor) -> torch.Tensor:
+        B, S, C, T = y.shape
+        device = y.device
+
+        pitch = (self.max_semitone - self.min_semitone) * torch.rand(B, device=device) + self.min_semitone
+
+        if self.training and random.random() < self.p:
+            shifted_y = torch.zeros_like(y)
+
+            for i in range(B):
+                shifted_y[i] = torchaudio.functional.pitch_shift(y[i], sample_rate=self.sample_rate, n_steps=pitch[i].item())
+            return shifted_y
+        else:
+            return y
