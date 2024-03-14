@@ -153,7 +153,7 @@ def my_app(cfg: DictConfig) -> None:
     train_loader, val_loader = initialize_loaders(cfg)
 
     log.info("Initializing augmentations.")
-    augs = initialize_augmentations(cfg)
+    manager, augs = initialize_augmentations(cfg)
 
     log.info("Initializing model, optimizer, scheduler.")
     model, opt, sch = initialize_model(cfg)
@@ -165,7 +165,8 @@ def my_app(cfg: DictConfig) -> None:
     plmodel = PLModel(
         model,
         augs,
-        opt, sch,
+        opt,
+        sch,
         cfg
     )
     trainer = pl.Trainer(
