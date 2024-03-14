@@ -133,10 +133,9 @@ class Mix(nn.Module):
             y += y_background * rms_background
         return y
 
-
-class Flip(nn.Module):
+class FlipStereo(nn.Module):
     """
-    Randomly flips channels from fragment.
+    Randomly flips left and right channels from fragment.
     """
 
     def __init__(
@@ -156,3 +155,21 @@ class Flip(nn.Module):
             right = 1 - left
             y = torch.cat([y.gather(2, left), y.gather(2, right)], dim=2)
         return y
+
+class FlipPolarity(nn.Module):
+    """
+    Randomly flips polarity from fragment.
+    """
+    def __init__(
+            self,
+            p: float = 0.5,
+    ):
+        super().__init__()
+        self.p = p
+
+    def forward(self, y: torch.Tensor) -> torch.Tensor:
+        B, S, C, T = y.shape
+        device = y.device
+
+        if self.training and random.random() < self.p:
+            return y.multiply(-1)
