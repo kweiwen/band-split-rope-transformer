@@ -14,7 +14,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from torch.optim import Optimizer, lr_scheduler
 
 from data import musdbDataset, moisesdbDataset, collate_fn
-from model import BandSplitRNN, BSRoformer, PLModel
+from model import BandSplitRNN, BandSplitRoPETransformer, PLModel
 
 from utils.callbacks import ValidationProgressBar
 
@@ -69,30 +69,16 @@ def initialize_loaders(cfg: DictConfig) -> tp.Tuple[DataLoader, DataLoader]:
         val_loader
     )
 
-def initialize_featurizer(
-        cfg: DictConfig
-) -> tp.Tuple[nn.Module, nn.Module]:
-    """
-    Initializes direct and inverse featurizers for audio.
-    """
-    featurizer = instantiate(
-        cfg.featurizer.direct_transform,
-    )
-    inv_featurizer = instantiate(
-        cfg.featurizer.inverse_transform,
-    )
-    return featurizer, inv_featurizer
-
-
 def initialize_augmentations(
         cfg: DictConfig
-) -> nn.Module:
+) -> tp.Tuple[None, nn.Module]:
     """
     Initializes augmentations.
     """
-    augs = instantiate(cfg.augmentations)
-    augs = nn.Sequential(*augs.values())
-    return augs
+    augs_cfg_list = list(instantiate(cfg.augmentations).values())
+    augs_manager = augs_cfg_list[0]
+    augs_model = nn.Sequential(*augs_cfg_list[1:])
+    return augs_manager, augs_model
 
 
 def initialize_model(
@@ -102,7 +88,7 @@ def initialize_model(
     Initializes model from configuration file.
     """
     # initialize model
-    model = BSRoformer(
+    model = BandSplitRoPETransformer(
         **cfg.model
     )
     # initialize optimizer

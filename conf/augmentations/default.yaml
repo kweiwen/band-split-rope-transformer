@@ -1,3 +1,6 @@
+augmentationmanager:
+  _target_: data.augmentations.AugmentationManager
+
 #randomcrop:
 #  _target_: data.augmentations.RandomCrop
 #  p: 1.0

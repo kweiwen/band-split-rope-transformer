@@ -4,6 +4,48 @@ import torch
 import torch.nn as nn
 import torchaudio
 
+class AugmentationManager:
+    def __init__(self):
+        pass
+    def modify_sequential_layers(
+            self,
+            sequential: nn.Sequential,
+            modify_fn
+    ) -> nn.Sequential:
+        """
+        Modify the layers of an nn.Sequential model using a provided modification function.
+
+        Args:
+        sequential (nn.Sequential): The original sequential model.
+        modify_fn (function): A function that takes a list of modules and returns a modified list of modules.
+
+        Returns:
+        nn.Sequential: A new sequential model with the modified layer order.
+        """
+        # Extract the layers as a list
+        layers = list(sequential.children())
+
+        # Apply the modification function
+        modified_layers = modify_fn(layers)
+
+        # Create a new nn.Sequential with the modified layers
+        return nn.Sequential(*modified_layers)
+
+    def rotate_layers(self, layers):
+        return layers[1:] + layers[:1]
+
+    def shuffle_layers(self, layers):
+        """
+        Shuffle the order of layers randomly.
+
+        Args:
+        layers (list): A list of layers (modules) to be shuffled.
+
+        Returns:
+        list: A new list of layers with random order.
+        """
+        random.shuffle(layers)
+        return layers
 
 class RandomCrop(nn.Module):
     """

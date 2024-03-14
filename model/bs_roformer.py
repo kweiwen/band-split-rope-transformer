@@ -246,7 +246,7 @@ DEFAULT_FREQS_PER_BANDS = (
   128, 129,
 )
 
-class BSRoformer(Module):
+class BandSplitRoPETransformer(Module):
 
     @beartype
     def __init__(
