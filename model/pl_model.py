@@ -5,6 +5,7 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import torch.nn.functional as F
 from torch.optim import Optimizer, lr_scheduler
+from typing import OrderedDict
 from omegaconf import DictConfig
 
 from beartype.typing import Tuple, Optional, List, Callable
@@ -46,11 +47,6 @@ class PLModel(pl.LightningModule):
         # logging
         self.save_hyperparameters(hparams)
 
-        self.multi_stft_kwargs = dict(
-            hop_length=147,
-            normalized=False
-        )
-
         self.multi_stft_resolution_loss_weight = 1.
 
     def training_step(
@@ -73,6 +69,7 @@ class PLModel(pl.LightningModule):
             self, batch, batch_idx
     ) -> torch.Tensor:
         loss, loss_dict, usdr = self.step(batch)
+        
         # logging
         for k in loss_dict:
             self.log(f"val/{k}", loss_dict[k])
@@ -89,31 +86,11 @@ class PLModel(pl.LightningModule):
         """
         # augmentations
         batchT = self.augmentations(batchT)
-        #
-        # # STFT
-        # batchS = self.featurizer(batchT)
-        # mixS, tgtS = batchS[:, 0], batchS[:, 1]
-        #
-        # # apply model
-        # predS = self.model(mixS)
-        #
-        # # iSTFT
-        # batchT = self.inverse_featurizer(
-        #     torch.stack((predS, tgtS), dim=1)
-        # )
-        # predT, tgtT = batchT[:, 0], batchT[:, 1]
-        #
-        # # compute loss
-        # loss, loss_dict = self.compute_losses(
-        #     predS, tgtS,
-        #     predT, tgtT
-        # )
-        #
-        # # compute metrics
-        # usdr = self.compute_usdr(predT, tgtT)
+
+        # fetch data
+        mixT, tgtT = batchT[:, 0], batchT[:, 1]
 
         # apply model
-        mixT, tgtT = batchT[:, 0], batchT[:, 1]
         predT = self.model(mixT)
 
         # compute loss
@@ -150,8 +127,11 @@ class PLModel(pl.LightningModule):
         loss = lossR + lossI + lossT
         return loss, loss_dict
 
-    def compute_multi_scale_loss(self, multi_stft_resolutions_window_sizes: Tuple[int, ...], pred: torch.Tensor,
-                                 target: torch.Tensor):
+    def compute_multi_scale_loss(self,
+                                 multi_stft_resolutions_window_sizes: Tuple[int, ...],
+                                 pred: torch.Tensor,
+                                 target: torch.Tensor
+                                 ) -> Tuple[torch.Tensor, OrderedDict[str, torch.Tensor]]:
         device = pred.device
         target = target[..., :pred.shape[-1]]  # protect against lost length on istft
 
@@ -161,17 +141,17 @@ class PLModel(pl.LightningModule):
 
         for window_size in multi_stft_resolutions_window_sizes:
             res_stft_kwargs = dict(
-                n_fft=max(window_size, 2048),  # not sure what n_fft is across multi resolution stft
+                n_fft=window_size,
                 win_length=window_size,
                 return_complex=True,
                 window=torch.hann_window(window_size, device=device),
-                **self.multi_stft_kwargs,
+                normalized=False,
             )
 
-            recon_Y = torch.stft(rearrange(pred, '... s t -> (... s) t'), **res_stft_kwargs)
+            pred_Y = torch.stft(rearrange(pred, '... s t -> (... s) t'), **res_stft_kwargs)
             target_Y = torch.stft(rearrange(target, '... s t -> (... s) t'), **res_stft_kwargs)
 
-            multi_stft_resolution_loss = multi_stft_resolution_loss + F.l1_loss(recon_Y, target_Y)
+            multi_stft_resolution_loss = multi_stft_resolution_loss + F.l1_loss(pred_Y, target_Y)
 
         weighted_multi_resolution_loss = multi_stft_resolution_loss * self.multi_stft_resolution_loss_weight
 
