@@ -14,7 +14,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from torch.optim import Optimizer, lr_scheduler
 
 from data import musdbDataset, moisesdbDataset, collate_fn
-from model import BandSplitRNN, BandSplitRoPETransformer, PLModel
+from model import BandSplitRoPETransformer, PLModel
 
 from utils.callbacks import ValidationProgressBar
 
