@@ -166,8 +166,7 @@ def my_app(cfg: DictConfig) -> None:
     log.info("Initializing loaders.")
     train_loader, val_loader = initialize_loaders(cfg)
 
-    log.info("Initializing featurizers.")
-    featurizer, inverse_featurizer = initialize_featurizer(cfg)
+    log.info("Initializing augmentations.")
     augs = initialize_augmentations(cfg)
 
     log.info("Initializing model, optimizer, scheduler.")
@@ -179,7 +178,6 @@ def my_app(cfg: DictConfig) -> None:
     log.info("Initializing Lightning modules.")
     plmodel = PLModel(
         model,
-        featurizer, inverse_featurizer,
         augs,
         opt, sch,
         cfg

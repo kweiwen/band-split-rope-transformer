@@ -16,8 +16,6 @@ class PLModel(pl.LightningModule):
     def __init__(
             self,
             model: nn.Module,
-            featurizer: nn.Module,
-            inverse_featurizer: nn.Module,
             augmentations: nn.Module,
             opt: Optimizer,
             sch: lr_scheduler._LRScheduler,
@@ -27,10 +25,6 @@ class PLModel(pl.LightningModule):
 
         # augmentations
         self.augmentations = augmentations
-
-        # featurizers
-        self.featurizer = featurizer
-        self.inverse_featurizer = inverse_featurizer
 
         # model
         self.model = model
@@ -47,6 +41,7 @@ class PLModel(pl.LightningModule):
         # logging
         self.save_hyperparameters(hparams)
 
+        # loss weight
         self.multi_stft_resolution_loss_weight = 1.
 
     def training_step(
@@ -69,7 +64,7 @@ class PLModel(pl.LightningModule):
             self, batch, batch_idx
     ) -> torch.Tensor:
         loss, loss_dict, usdr = self.step(batch)
-        
+
         # logging
         for k in loss_dict:
             self.log(f"val/{k}", loss_dict[k])
@@ -133,12 +128,12 @@ class PLModel(pl.LightningModule):
                                  target: torch.Tensor
                                  ) -> Tuple[torch.Tensor, OrderedDict[str, torch.Tensor]]:
         device = pred.device
-        target = target[..., :pred.shape[-1]]  # protect against lost length on istft
+        target = target[..., :pred.shape[-1]]  # protect against lost length on istft, normally it should have equal length
 
+        # time loss
         loss = F.l1_loss(pred, target)
 
         multi_stft_resolution_loss = 0.
-
         for window_size in multi_stft_resolutions_window_sizes:
             res_stft_kwargs = dict(
                 n_fft=window_size,
@@ -153,8 +148,10 @@ class PLModel(pl.LightningModule):
 
             multi_stft_resolution_loss = multi_stft_resolution_loss + F.l1_loss(pred_Y, target_Y)
 
+        # multiply weight
         weighted_multi_resolution_loss = multi_stft_resolution_loss * self.multi_stft_resolution_loss_weight
 
+        # calculate total loss
         total_loss = loss + weighted_multi_resolution_loss
 
         loss_dict = {
@@ -171,7 +168,7 @@ class PLModel(pl.LightningModule):
             tgtT: torch.Tensor,
             delta: float = 1e-7
     ) -> torch.Tensor:
-        tgtT = tgtT[..., :predT.shape[-1]]  # protect against lost length on istft
+        tgtT = tgtT[..., :predT.shape[-1]]  # protect against lost length on istft, normally it should have equal length
 
         num = torch.sum(torch.square(tgtT), dim=(1, 2))
         den = torch.sum(torch.square(tgtT - predT), dim=(1, 2))
