@@ -14,6 +14,7 @@
 import contextlib
 import copy
 import os
+import random
 import sys
 import threading
 from typing import Any, Dict, Iterable
@@ -363,6 +364,18 @@ class OverrideEpochStepCallback(Callback):
 
     def _log_step_as_current_epoch(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         pl_module.log("step", trainer.current_epoch)
+
+
+class AugmentationParameterUpdateCallback(Callback):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def on_train_epoch_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+        new_value = random.random()
+        train_dataloader = trainer.train_dataloader
+        train_dataset = train_dataloader.dataset
+        # pl_module.train_dataset.set_var(new_value)
+
 
 class ValidationProgressBar(pl.callbacks.TQDMProgressBar):
     
