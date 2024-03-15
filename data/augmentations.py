@@ -237,19 +237,22 @@ class PitchShift(nn.Module):
         self.max_semitone = max_semitone
 
     def forward(self, y: torch.Tensor) -> torch.Tensor:
-        B, S, C, T = y.shape
+        B, S, C, T = y.shape  # Assuming your input is [Batch, Samples, Channels, Time]
         device = y.device
 
-        pitch = (self.max_semitone - self.min_semitone) * torch.rand(B, device=device) + self.min_semitone
-        if self.training and random.random() < self.p:
-            shifted_y = torch.zeros_like(y)
+        pitch = (self.max_semitone - self.min_semitone) * random.random() + self.min_semitone
 
-            for index in range(B):
-                # apply pitch shift
-                shifted_y[index] = torchaudio.functional.pitch_shift(
-                    waveform=y[index],
-                    sample_rate=self.sample_rate,
-                    n_steps=pitch[index].item())
+        if self.training and random.random() < self.p:
+            y_reshaped = y.view(-1, C, T)
+
+            shifted_y_reshaped = torchaudio.functional.pitch_shift(
+                waveform=y_reshaped,
+                sample_rate=self.sample_rate,
+                n_steps=pitch,
+            )
+
+            shifted_y = shifted_y_reshaped.view(B, S, C, T)
+
             return shifted_y
         else:
             return y
