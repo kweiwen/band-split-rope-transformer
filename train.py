@@ -76,9 +76,9 @@ def initialize_augmentations(
     Initializes augmentations.
     """
     augs_cfg_list = list(instantiate(cfg.augmentations).values())
-    augs_manager = augs_cfg_list[0]
-    augs_model = nn.Sequential(*augs_cfg_list[1:])
-    return augs_manager, augs_model
+    host = augs_cfg_list[0]
+    augs = nn.Sequential(*augs_cfg_list[1:])
+    return host, augs
 
 
 def initialize_model(
@@ -153,7 +153,7 @@ def my_app(cfg: DictConfig) -> None:
     train_loader, val_loader = initialize_loaders(cfg)
 
     log.info("Initializing augmentations.")
-    manager, augs = initialize_augmentations(cfg)
+    host, augs = initialize_augmentations(cfg)
 
     log.info("Initializing model, optimizer, scheduler.")
     model, opt, sch = initialize_model(cfg)
@@ -165,6 +165,7 @@ def my_app(cfg: DictConfig) -> None:
     plmodel = PLModel(
         model,
         augs,
+        host,
         opt,
         sch,
         cfg

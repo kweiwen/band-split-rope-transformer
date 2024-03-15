@@ -17,6 +17,7 @@ class PLModel(pl.LightningModule):
             self,
             model: nn.Module,
             augmentations: nn.Module,
+            host,
             opt: Optimizer,
             sch: lr_scheduler._LRScheduler,
             hparams: DictConfig = None
@@ -25,6 +26,7 @@ class PLModel(pl.LightningModule):
 
         # augmentations
         self.augmentations = augmentations
+        self.host = host
 
         # model
         self.model = model
