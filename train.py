@@ -162,6 +162,13 @@ def my_app(cfg: DictConfig) -> None:
     log.info("Initializing Lightning logger and callbacks.")
     logger, callbacks = initialize_utils(cfg)
 
+    log.info("Initializing Lightning trainer.")
+    trainer = pl.Trainer(
+        **cfg.trainer,
+        logger=logger,
+        callbacks=callbacks,
+    )
+
     log.info("Initializing Lightning modules.")
     plmodel = PLModel(
         model,
@@ -170,11 +177,6 @@ def my_app(cfg: DictConfig) -> None:
         opt,
         sch,
         cfg
-    )
-    trainer = pl.Trainer(
-        **cfg.trainer,
-        logger=logger,
-        callbacks=callbacks,
     )
 
     log.info("Starting training...")
