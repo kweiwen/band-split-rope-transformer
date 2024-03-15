@@ -6,7 +6,6 @@ defaults:
   - test_dataset: default
   - sad: default
   - augmentations: default
-  - featurizer: stft
   - callbacks: default
   - _self_
 

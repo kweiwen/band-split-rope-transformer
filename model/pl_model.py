@@ -65,6 +65,9 @@ class PLModel(pl.LightningModule):
     def validation_step(
             self, batch, batch_idx
     ) -> torch.Tensor:
+        """
+        Input shape: [batch_size, n_sources, n_channels, time]
+        """
         loss, loss_dict, usdr = self.step(batch)
 
         # logging
