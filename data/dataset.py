@@ -94,15 +94,25 @@ class musdbDataset(Dataset):
     def load_files(
             self, fp_template: str, indices: tp.Tuple[int, int],
     ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        mix_segment = self.load_file(
-            fp_template.format('mixture'), indices
-        )
+
+        # mixture data
+        data = []
+        for target in self.TARGETS:
+            temp = self.load_file(
+                fp_template.format(target), indices
+            )
+            data.append(temp)
+        mix_segment = torch.stack(data)
+
+        # target data
         tgt_segment = self.load_file(
             fp_template.format(self.target), indices
         )
+
         max_norm = max(
             mix_segment.abs().max(), tgt_segment.abs().max()
         )
+
         mix_segment /= max_norm
         tgt_segment /= max_norm
         return (
@@ -181,7 +191,10 @@ class musdbDataset(Dataset):
             mix_segment, tgt_segment = self.load_files(*self.filelist[index])
 
         # augmentations related to mixing/dropping sources
-        mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
+        # apply augmentations here...
+        # e.g.: mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
+        # the last step of augmentations is to sum up "mix_segment"!
+        mix_segment = torch.sum(mix_segment, dim=0)
 
         return (
             mix_segment, tgt_segment
