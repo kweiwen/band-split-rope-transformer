@@ -12,7 +12,7 @@ defaults:
 
 # data
 multiple_dataset:
-  musdbDataset: False
+  musdbDataset: True
   moisesdbDataset: True
 train_loader:
   batch_size: 1

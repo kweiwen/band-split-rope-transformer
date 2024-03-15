@@ -194,7 +194,7 @@ class FlipStereo(nn.Module):
         device = y.device
 
         if self.training and C == 2 and random.random() < self.p:
-            left = torch.ones((B, S, 1, 1), dtype=torch.uint8, device=device)
+            left = torch.ones((B, S, 1, 1), dtype=torch.int64, device=device)
             left = left.expand(-1, -1, -1, T)
             right = 1 - left
             y = torch.cat([y.gather(2, left), y.gather(2, right)], dim=2)
@@ -213,11 +213,10 @@ class FlipPolarity(nn.Module):
         self.p = p
 
     def forward(self, y: torch.Tensor) -> torch.Tensor:
-        B, S, C, T = y.shape
-        device = y.device
-
         if self.training and random.random() < self.p:
             return y.multiply(-1)
+        else:
+            return y
 
 
 class PitchShift(nn.Module):
