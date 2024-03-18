@@ -17,17 +17,17 @@ gainscale:
 
 mix:
   _target_: data.augmentations.Mix
-  p: 0.75
+  p: 0.5
   min_db: 0.
   max_db: 5.
 
 flipstereo:
   _target_: data.augmentations.FlipStereo
-  p: 0.75
+  p: 0.5
 
 flippolarity:
   _target_: data.augmentations.FlipPolarity
-  p: 0.75
+  p: 0.5
 
 #pitchshift:
 #  _target_: data.augmentations.PitchShift
