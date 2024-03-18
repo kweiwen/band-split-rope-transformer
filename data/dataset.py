@@ -101,19 +101,21 @@ class musdbDataset(Dataset):
                 fp_template.format(target), indices
             )
             data.append(temp)
-        mix_segment = torch.stack(data)
+        mix_segments = torch.stack(data)
+
         # target data
         tgt_segment = self.load_file(
             fp_template.format(self.target), indices
         )
+
         # normalize segment
         max_norm = max(
-            mix_segment.abs().max(), tgt_segment.abs().max()
+            mix_segments.abs().max(), tgt_segment.abs().max()
         )
-        mix_segment /= max_norm
+        mix_segments /= max_norm
         tgt_segment /= max_norm
         return (
-            mix_segment, tgt_segment
+            mix_segments, tgt_segment
         )
 
     @staticmethod
@@ -183,14 +185,15 @@ class musdbDataset(Dataset):
         """
         # load files
         if self.preload_dataset:
-            mix_segment, tgt_segment = self.filelist[index]
+            mix_segments, tgt_segment = self.filelist[index]
         else:
-            mix_segment, tgt_segment = self.load_files(*self.filelist[index])
+            mix_segments, tgt_segment = self.load_files(*self.filelist[index])
 
         # augmentations related to mixing/dropping sources and "inconsistency" operation
         # e.g. mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
         # the last step of augmentations is to sum up "mix_segment"!
-        mix_segment = torch.sum(mix_segment, dim=0)
+        mix_segment = torch.sum(mix_segments, dim=0)
+        mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
 
         return (
             mix_segment, tgt_segment
