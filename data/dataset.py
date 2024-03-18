@@ -94,14 +94,19 @@ class musdbDataset(Dataset):
     def load_files(
             self, fp_template: str, indices: tp.Tuple[int, int],
     ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
+        # # mixture data
+        # data = []
+        # for target in self.TARGETS:
+        #     temp = self.load_file(
+        #         fp_template.format(target), indices
+        #     )
+        #     data.append(temp)
+        # mix_segment = torch.stack(data)
+
         # mixture data
-        data = []
-        for target in self.TARGETS:
-            temp = self.load_file(
-                fp_template.format(target), indices
-            )
-            data.append(temp)
-        mix_segments = torch.stack(data)
+        mix_segment = self.load_file(
+            fp_template.format("mixture"), indices
+        )
 
         # target data
         tgt_segment = self.load_file(
@@ -110,12 +115,12 @@ class musdbDataset(Dataset):
 
         # normalize segment
         max_norm = max(
-            mix_segments.abs().max(), tgt_segment.abs().max()
+            mix_segment.abs().max(), tgt_segment.abs().max()
         )
-        mix_segments /= max_norm
+        mix_segment /= max_norm
         tgt_segment /= max_norm
         return (
-            mix_segments, tgt_segment
+            mix_segment, tgt_segment
         )
 
     @staticmethod
@@ -185,14 +190,14 @@ class musdbDataset(Dataset):
         """
         # load files
         if self.preload_dataset:
-            mix_segments, tgt_segment = self.filelist[index]
+            mix_segment, tgt_segment = self.filelist[index]
         else:
-            mix_segments, tgt_segment = self.load_files(*self.filelist[index])
+            mix_segment, tgt_segment = self.load_files(*self.filelist[index])
 
         # augmentations related to mixing/dropping sources and "inconsistency" operation
         # e.g. mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
         # the last step of augmentations is to sum up "mix_segment"!
-        mix_segment = torch.sum(mix_segments, dim=0)
+        # mix_segment = torch.sum(mix_segments, dim=0)
         mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
 
         return (
