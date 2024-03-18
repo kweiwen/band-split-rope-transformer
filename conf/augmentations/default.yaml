@@ -29,11 +29,11 @@ flippolarity:
   _target_: data.augmentations.FlipPolarity
   p: 0.75
 
-pitchshift:
-  _target_: data.augmentations.PitchShift
-  p: 0.75
-  sample_rate: 44100
-  min_semitone: -2
-  max_semitone: 2
+#pitchshift:
+#  _target_: data.augmentations.PitchShift
+#  p: 0.75
+#  sample_rate: 44100
+#  min_semitone: -2
+#  max_semitone: 2
 
 
