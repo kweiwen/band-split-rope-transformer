@@ -17,21 +17,21 @@ gainscale:
 
 mix:
   _target_: data.augmentations.Mix
-  p: 0.5
+  p: 0.75
   min_db: 0.
   max_db: 5.
 
 flipstereo:
   _target_: data.augmentations.FlipStereo
-  p: 0.5
+  p: 0.75
 
 flippolarity:
   _target_: data.augmentations.FlipPolarity
-  p: 0.5
+  p: 0.75
 
 pitchshift:
   _target_: data.augmentations.PitchShift
-  p: 0.5
+  p: 0.75
   sample_rate: 44100
   min_semitone: -2
   max_semitone: 2
