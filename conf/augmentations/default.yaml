@@ -11,23 +11,23 @@ augmentationmanager:
 
 gainscale:
   _target_: data.augmentations.GainScale
-  p: 0.5
+  p: 0.25
   min_db: -10.
   max_db: 10.
 
 mix:
   _target_: data.augmentations.Mix
-  p: 0.5
+  p: 0.25
   min_db: 0.
   max_db: 5.
 
 flipstereo:
   _target_: data.augmentations.FlipStereo
-  p: 0.5
+  p: 0.25
 
 flippolarity:
   _target_: data.augmentations.FlipPolarity
-  p: 0.5
+  p: 0.25
 
 #pitchshift:
 #  _target_: data.augmentations.PitchShift
