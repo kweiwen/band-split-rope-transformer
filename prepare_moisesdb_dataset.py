@@ -19,7 +19,7 @@ parser.add_argument(
     '--input-dir',
     type=str,
     required=False,
-    default= "../../dataset/moisesdb",
+    default= "../moisesdb",
     help="Path to directory with moisesdb dataset"
 )
 parser.add_argument(
@@ -74,7 +74,7 @@ def prepare_save_line(
         save_line = f"{track_name}\t{i}\t{i + window_size}\n"
         yield save_line
 
-def split_dataset(db: MoisesDB, ratio: float = 0.2):
+def split_dataset(db: MoisesDB, ratio: float = 0.4):
     # get total length of datasets
     n_songs = len(db)
 
