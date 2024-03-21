@@ -8,7 +8,7 @@ model_ckpt:
   mode: 'min'
   save_top_k: 4
   dirpath: '/weights'
-  filename: 'epoch{epoch:02d}-val_loss{val/loss:.2f}'
+  filename: 'epoch{epoch:02d}-val_loss{val/loss:.3f}'
   auto_insert_metric_name: False
 
 model_ckpt_usdr:
@@ -17,7 +17,7 @@ model_ckpt_usdr:
   mode: 'max'
   save_top_k: 4
   dirpath: ${..model_ckpt.dirpath}
-  filename: 'epoch{epoch:02d}-val_usdr{val/usdr:.2f}'
+  filename: 'epoch{epoch:02d}-val_usdr{val/usdr:.3f}'
   auto_insert_metric_name: False
 
 early_stop:
