@@ -94,14 +94,19 @@ class musdbDataset(Dataset):
     def load_files(
             self, fp_template: str, indices: tp.Tuple[int, int],
     ) -> tp.Tuple[torch.Tensor, torch.Tensor]:
-        # mixture data
-        data = []
-        for target in self.TARGETS:
-            temp = self.load_file(
-                fp_template.format(target), indices
-            )
-            data.append(temp)
-        mix_segment = torch.stack(data)
+        # # mixture data
+        # data = []
+        # for target in self.TARGETS:
+        #     temp = self.load_file(
+        #         fp_template.format(target), indices
+        #     )
+        #     data.append(temp)
+        # mix_segment = torch.stack(data)
+
+        # mixture data obsolete
+        mix_segment = self.load_file(
+            fp_template.format("mixture"), indices
+        )
 
         # target data
         tgt_segment = self.load_file(
@@ -192,7 +197,7 @@ class musdbDataset(Dataset):
         # augmentations related to mixing/dropping sources and "inconsistency" operation
         # e.g. mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
         # the last step of augmentations is to sum up "mix_segment"!
-        mix_segment = torch.sum(mix_segment, dim=0)
+        # mix_segment = torch.sum(mix_segment, dim=0)
         mix_segment, tgt_segment = self.augment(mix_segment, tgt_segment)
 
         return (
