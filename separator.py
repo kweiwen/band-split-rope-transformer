@@ -8,7 +8,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from einops import rearrange, pack, unpack
 
-from train import initialize_model, initialize_featurizer
+from train import initialize_model
 from utils.utils_inference import load_pl_state_dict, get_minibatch
 
 
